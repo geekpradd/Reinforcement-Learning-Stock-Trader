@@ -5,13 +5,14 @@ import pandas as pd
 import json
 import datetime as dt
 
-MAX_Money = 10000
+MAX_Money = 1000
 class StockEnv(gym.Env):
     metadata = {'render.modes': ['human']}
     
-    def __init__(self,df,**kwargs):
+    def __init__(self,df, train, volume=True, **kwargs):
         super(StockEnv,self).__init__()
-        
+        self.volume = volume
+        self.train = train
         self.MAX_shares = 2147483647
         self.Min_Brokerage = 30
         self.Brokerage_rate = 0.001
@@ -27,15 +28,16 @@ class StockEnv(gym.Env):
         
         self.df = df
         self.action_space = spaces.Box(low = np.array([-1]), high = np.array([1]), dtype = np.float16)
-        self.observation_space = spaces.Box(low=np.array([0,0,0,0,0]),high=np.array([1,1,1,1,1]),dtype=np.float16)
+        self.observation_space = spaces.Box(low=np.array([0,0,0,0]),high=np.array([1,1,1,1]),dtype=np.float16)
     
     def _get_price(self):
+#         print ("Day {0}".format(self.df.loc[self.current_step,"Date"]))
+#         print ("low: {0} high: {1}".format(self.df.loc[self.current_step,"Open"],self.df.loc[self.current_step,"Close"]))
         return np.random.uniform(self.df.loc[self.current_step,"Open"],self.df.loc[self.current_step,"Close"])
     
     def _observe(self):
-        frame = np.array([self.df.loc[self.current_step,'Open'],self.df.loc[self.current_step,'High'],self.df.loc[self.current_step,'Low'],self.df.loc[self.current_step,'Close'],self.df.loc[self.current_step,'Volume'] ])
+        frame = np.array([self.df.loc[self.current_step,'Open'],self.df.loc[self.current_step,'High'],self.df.loc[self.current_step,'Low'],self.df.loc[self.current_step,'Close']])
         frame = frame / self.highest_price
-        frame[4] = frame[4]*self.highest_price / self.MAX_shares
         info = {
             'balance' : self.balance,
             'highest_price': self.highest_price,
@@ -59,7 +61,12 @@ class StockEnv(gym.Env):
         if "Broke_rate" in kwargs.keys():
             self.Brokerage_rate = kwargs["Broke_rate"]
         
-        self.current_step = np.random.randint(0,len(self.df.loc[:,'Open'].values)-1)
+        if self.train:
+            self.current_step = np.random.randint(0,len(self.df.loc[:,'Open'].values)-1)
+        else:
+            self.current_step = 0
+        print (self.train)
+        print (self.current_step)
         self.balance = balance
         self.shares_held = initial_shares
         self.current_price = self._get_price() 
@@ -132,7 +139,7 @@ class StockEnv(gym.Env):
         print(f'Profit: {profit}')
 
 
-def create_stock_env(location):
+def create_stock_env(location, train=True):
     df = pd.read_csv(location)
     df = df.sort_values('Date')
-    return StockEnv(df)
+    return StockEnv(df, train), df.shape[0]
