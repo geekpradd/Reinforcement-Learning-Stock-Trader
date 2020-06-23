@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>StockApp</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+	<script src="https://canvasjs.com/assets/script/canvasjs.min.js"></script>
+
+	<script>
+		var t;
+		var timerset = false;
+		$(document).ready(function () {
+			$("form").on("submit", function (e) {
+				if (timerset) {
+					clearInterval(t);
+					timerset = false;
+				}
+
+				e.preventDefault();
+				var url = "{% url 'fileupload' %}";
+				var data = new FormData();
+				$.each($("#upload_file")[0].files, function(i, file) {
+					data.append("files", file);
+				});
+				data.append("capital", $("#capital").val());
+				data.append("csrfmiddlewaretoken", '{{ csrf_token }}');
+
+				$.ajax({
+					url: url,
+					data: data,
+					cache: false,
+					contentType: false,
+					processData: false,
+					type: 'post',
+					beforeSend: function() {
+						$(".modal-title").html("Uploading...");
+						$("#modal-progress").modal("show");
+					},
+					success: function (data) {
+						if (data.valid) {
+							$(".modal-title").html("Trading...");
+							t = setInterval(checkProgress, 1000);
+							timerset = true;
+						}
+						else {
+							$("#modal-progress").modal("hide");
+							alert("Your input file(s) are invalid. Please try again.");
+						}
+					},
+					error: function () {
+						$("#modal-progress").modal("hide");
+						alert("Some error occurred. Please check your internet connection and try again.");
+					}
+				});
+			});
+		});
+
+		function checkProgress() {
+			$.ajax({
+				url: "{% url 'checkprogress' %}",
+				data: {},
+				cache: false,
+				contentType: false,
+				processData: false,
+				type: 'get',
+				success: function (data) {
+					if (data.valid) {
+						if (data.progress == 100) {
+							clearInterval(t);
+							timerset = false;
+							$("#modal-progress").modal("hide");
+							plotGraphs(data.graph_data);
+						}
+					}
+					else {
+						if (timerset) {
+							clearInterval(t);
+							timerset = false;
+						}
+					}
+				}
+			});
+		}
+
+		function plotGraphs(graph_data) {
+			$("#profit").css("display", "block");
+			datapoints = [];
+			for (p of graph_data[0]) {
+				datapoints[datapoints.length] = {x : p[0], y : p[1]};
+			}
+
+			var chart1 = new CanvasJS.Chart("profit", {
+				title: {
+					text: "Profit Gained"
+				},
+				axisX: {
+					title: "Time"
+				},
+				axisY: {
+					title: "Profit",
+					prefix: "$",
+					suffix: "K"
+				},
+				toolTip: {
+					shared: true
+				},
+				legend: {
+					cursor: "pointer",
+					verticalAlign: "top",
+					horizontalAlign: "center",
+					dockInsidePlotArea: true,
+					// itemclick: toggleDataSeries
+				},
+				data: [{
+					type:"line",
+					name: "Profit",
+					// showInLegend: true,
+					markerSize: 5,
+					yValueFormatString: "$#,###k",
+					dataPoints: datapoints
+				}]
+			});
+			chart1.render();
+
+			$("#stocks").css("display", "block");
+
+			datalist = [];
+			var i = 1;
+			for (list of graph_data[1]) {
+				datapoints = [];
+				for (p of list) {
+					datapoints[datapoints.length] = {x : p[0], y : p[1]};
+				}
+				datalist[datalist.length] = {type:"line", name: "Stock "+i, showInLegend: true, markerSize: 5, yValueFormatString: "#,###", dataPoints: datapoints};
+				i++;
+			}
+
+			var chart2 = new CanvasJS.Chart("stocks", {
+				title: {
+					text: "Stocks Bought"
+				},
+				axisX: {
+					title: "Time"
+				},
+				axisY: {
+					title: "Quantity"
+				},
+				toolTip: {
+					shared: true
+				},
+				legend: {
+					cursor: "pointer",
+					verticalAlign: "top",
+					horizontalAlign: "center",
+					// dockInsidePlotArea: true,
+					itemclick: function (e) {
+						if (typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+							e.dataSeries.visible = false;
+						}
+						else {
+							e.dataSeries.visible = true;
+						}
+						chart2.render();
+					}
+				},
+				data: datalist
+			});
+			chart2.render();
+
+			// $("#actions").css("display", "block");
+		}
+	</script>
+
+	{% load static %}
+	<style>
+		body {
+			padding: 0;
+			background-image: url("{% static 'bg.jpg' %}");
+		}
+		#formwrapper {
+			box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+			background-color: #fff;
+			padding : 20px;
+			border-radius: 10px;
+		}
+		.graph {
+			/*padding : 20px;
+			background-color: #fff;
+			border-radius: 20px;*/
+			margin: 10px;
+			box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+		}
+		#heading {
+			width: 100%;
+			margin: 0;
+			padding : 10px;
+			background-color: #00802b;
+			color: #fff;
+		}
+	</style>
+</head>
+<body>
+	<div id = "heading"><h1 align="center">Stock Trading Agent</h1></div>
+	<br/>
+	<div class="container">
+		<div class="row">
+			<div class="col"></div>
+			<div id = "formwrapper" class="col">
+				<form enctype="multipart/form-data">
+					<div class="form-group">
+						<label>Upload files in csv format</label><br/>
+						<input type="file" id="upload_file" name="csvfile" required="true" multiple>
+					</div>
+					<div class="form-group">
+						<label>Initial capital* (in the same currency as stocks)</label><br/>
+						<input type="number" min = "1" id="capital" name="capital" required="true">
+					</div>
+
+					<button id = "trade" class="btn btn-primary">Trade</button>
+				</form>
+				
+			</div>
+			<div class="col"></div>
+		</div>
+
+		<div class="modal" id="modal-progress" data-backdrop="static" data-keyboard="false">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h4 class="modal-title">Uploading...</h4>
+					</div>
+					<div class="modal-body">
+						<div class="progress">
+							<div class="progress-bar progress-bar-striped progress-bar-animated" style="width:100%">Please wait</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<br/>
+		<center>
+			<div class = "graph" id="profit" style="height: 400px; width: 90%;display: none;"></div>
+			<div class = "graph" id="stocks" style="height: 400px; width: 90%; display: none;"></div>
+			<div class = "graph" id="actions" style="height: 400px; width: 90%; display: none;"></div>
+		</center>
+	</div>
+</body>
+</html>
