@@ -27,13 +27,13 @@ def StartTrading(capital, initial_stocks, agent_type, files, sesID) :
 	# Do some machaxxx RL and populate ans
 
 	# Machaxxx RL :
-	for i in range(200) :
-		ans[0].append([i+1, random.randrange(10, 10000, 1)])
+	for i in range(500) :
+		ans[0].append([i+1, random.randrange(i, 2*i+1, 1)])
 		ans[2].append([i+1, 2*(random.random()-0.5)])
 
 	for j in range(len(files)) :
 		ans[1].append([])
-		for i in range(200) :
+		for i in range(500) :
 			ans[1][j].append([i+1, random.randrange(0, 5000, 1)])
 
 	usr = User.objects.get(key = sesID)
