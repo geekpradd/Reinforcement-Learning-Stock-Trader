@@ -27,6 +27,8 @@
 					data.append("files", file);
 				});
 				data.append("capital", $("#capital").val());
+				data.append("agentType", parseInt($("input[name='agenttype']:checked").val()));
+				data.append("stocks", $("#stocksNum").val());
 				data.append("csrfmiddlewaretoken", '{{ csrf_token }}');
 
 				$.ajax({
@@ -173,6 +175,17 @@
 
 			// $("#actions").css("display", "block");
 		}
+		function addDisable () {
+			$('#stocksNum').attr('disabled', 'true');
+			$('#upload_file').attr('multiple', 'true');
+		}
+		function removeDisable () {
+			$('#stocksNum').removeAttr('disabled');
+			$('#upload_file').removeAttr('multiple');
+			if($("#upload_file")[0].files.length > 1) {
+				$('#upload_file').val('');
+			}
+		}
 	</script>
 
 	{% load static %}
@@ -208,23 +221,43 @@
 	<br/>
 	<div class="container">
 		<div class="row">
-			<div class="col"></div>
-			<div id = "formwrapper" class="col">
+			<div class="col-sm-3"></div>
+			<div id = "formwrapper" class="col-sm-6">
 				<form enctype="multipart/form-data">
 					<div class="form-group">
-						<label>Upload files in csv format</label><br/>
+						<label><b>Upload file(s) in csv format</b></label><br/>
 						<input type="file" id="upload_file" name="csvfile" required="true" multiple>
 					</div>
+					<hr/>
 					<div class="form-group">
-						<label>Initial capital* (in the same currency as stocks)</label><br/>
+						<label><b>Initial capital</b> (in the same currency as stocks)</label><br/>
 						<input type="number" min = "1" id="capital" name="capital" required="true">
+					</div>
+					<hr/>
+					<div class="form-group">
+						<b>Select Agent type</b>
+						<div class = "container">
+							<div class = "row">
+								<div class = "col"><label><input type="radio" name="agenttype" onclick="addDisable()" value="0" checked>DDPG Multi Stock</label></div>
+								<div class = "col"><label><input type="radio" name="agenttype" onclick="removeDisable()" value="1">DDPG Single Stock</label></div>
+							</div>
+							<div class = "row">
+								<div class = "col"><label><input type="radio" name="agenttype" onclick="removeDisable()" value="2">DDQN Single Stock</label></div>
+								<div class = "col"><label><input type="radio" name="agenttype" onclick="removeDisable()" value="3">DRQN Single Stock</label></div>
+							</div>
+						</div>
+					</div>
+					<hr/>
+					<div class="form-group">
+						<label><b>Initial number of stocks</b></label><br/>
+						<input type="number" min = "0" id="stocksNum" name="stocks" required="true" disabled>
 					</div>
 
 					<button id = "trade" class="btn btn-primary">Trade</button>
 				</form>
 				
 			</div>
-			<div class="col"></div>
+			<div class="col-sm-3"></div>
 		</div>
 
 		<div class="modal" id="modal-progress" data-backdrop="static" data-keyboard="false">

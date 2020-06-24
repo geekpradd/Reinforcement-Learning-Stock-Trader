@@ -9,13 +9,19 @@ def homepage(request) :
 
 	return render(request, 'index.html')
 
-def StartTrading(capital, files, sesID) :
+def StartTrading(capital, initial_stocks, agent_type, files, sesID) :
 	'''
 	Updates the database by a list of three lists.
 	First list contains tuples of (x, y) values corresponding to profit values.
 	Second list contains n lists where n is the number of files uploaded by the user. Each of those n lists contains tuples of (x, y) values corresponding to the number of shares bought bought by agent of that company.
 	Third list contains tuples of (x, y) values corresponding to the action taken by the agent.
+
+	agent_type :
+	0 : DDPG Multi, 1 : DDPG Single, 2 : DDQN Single, 3 : DRQN Single
+
+	files is a list of one or more files depending on agent_type
 	''' 
+
 	ans = [[], [], []]
 
 	# Do some machaxxx RL and populate ans
@@ -35,10 +41,6 @@ def StartTrading(capital, files, sesID) :
 	usr.progress = 100
 	usr.save()
 
-def tester() :
-	while True :
-		print('.')
-		time.sleep(2)
 
 def fileUpload(request) :
 	if not request.session.session_key :
@@ -46,6 +48,15 @@ def fileUpload(request) :
 
 	files = request.FILES.getlist('files')
 	capital = request.POST.get('capital')
+	agent_type = request.POST.get('agentType')
+	# 0 : DDPG Multi, 1 : DDPG Single, 2 : DDQN Single, 3 : DRQN Single
+
+	initial_stocks = request.POST.get('stocks')
+	try :
+		initial_stocks = int(initial_stocks)
+	except:
+		initial_stocks = 0
+
 	sesID = request.session.session_key
 	is_valid = False
 
@@ -57,10 +68,12 @@ def fileUpload(request) :
 		if usr.exists() :
 			u = usr[0]
 			u.capital = capital
+			u.initial_stocks = initial_stocks
+			u.agent_type = agent_type
 			u.progress = 0
 			u.save()
 		else :
-			u = User(key=sesID, capital=capital, progress=0)
+			u = User(key=sesID, capital=capital, initial_stocks = initial_stocks, agent_type= agent_type, progress=0)
 			u.save()
 
 		# # Code for saving files in databse (not reqiquired as of now)
@@ -68,7 +81,7 @@ def fileUpload(request) :
 		# 	f = File(file = file, owner = u)
 		# 	f.save()
 
-		_thread.start_new_thread(StartTrading, (capital, files, sesID))
+		_thread.start_new_thread(StartTrading, (capital, initial_stocks, agent_type, files, sesID))
 
 	data = {'valid' : is_valid}
 	return JsonResponse(data)
