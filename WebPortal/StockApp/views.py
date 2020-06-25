@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from .models import User, File
-import datetime, random, _thread, time
+import datetime, random, _thread, time, copy
 
 def homepage(request) :
 	if not request.session.session_key :
@@ -9,7 +9,8 @@ def homepage(request) :
 
 	return render(request, 'index.html')
 
-def StartTrading(capital, initial_stocks, agent_type, files, sesID) :
+def StartTrading(capital, initial_stocks, agent_type, files2, sesID) :
+	files = copy.deepcopy(files2)
 	'''
 	Updates the database by a list of three lists.
 	First list contains tuples of (x, y) values corresponding to profit values.
@@ -21,7 +22,7 @@ def StartTrading(capital, initial_stocks, agent_type, files, sesID) :
 
 	files is a list of one or more files depending on agent_type
 	''' 
-
+	
 	ans = [[], [], []]
 
 	# Do some machaxxx RL and populate ans
@@ -76,12 +77,14 @@ def fileUpload(request) :
 			u = User(key=sesID, capital=capital, initial_stocks = initial_stocks, agent_type= agent_type, progress=0)
 			u.save()
 
-		# # Code for saving files in databse (not reqiquired as of now)
+		# # Code for saving files in databse (not required as of now)
 		# for file in files :
 		# 	f = File(file = file, owner = u)
 		# 	f.save()
 
 		_thread.start_new_thread(StartTrading, (capital, initial_stocks, agent_type, files, sesID))
+
+	time.sleep(0.5)
 
 	data = {'valid' : is_valid}
 	return JsonResponse(data)
