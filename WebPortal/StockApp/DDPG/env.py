@@ -21,14 +21,15 @@ def softmax(y, theta = 1.0):
     y = np.exp(y)
     ax_sum = np.sum(y)
     p = y / ax_sum
-    return p
+    return p*0.9
 
 class StockEnv(gym.Env):
     metadata = {'render.modes': ['human']}
     
     def __init__(self, df, params, train = True):
         super(StockEnv,self).__init__()
-        self.balance = params['balance']
+        self.initbalance = params['balance']
+        self.initshares_held = params['shares_held']
         self.num_stocks = params['num_stocks']
         self.balance_normal = params['balance_normal']
         self.price_normal = params['price_normal']
@@ -44,13 +45,13 @@ class StockEnv(gym.Env):
         self.action_space = spaces.Box(low = np.zeros(self.num_stocks*2), high = np.ones(self.num_stocks*2), dtype = np.float32)
         self.observation_space = spaces.Box(low = -np.ones(self.state_dimensions), high = np.ones(self.state_dimensions), dtype = np.float32)
 
-    def reset(self, shares_held = None):
-
+    def reset(self):
+        self.balance = self.initbalance
         if self.train:
             self.current_step = np.random.randint(self.num_prev, self.max_steps)
         else:
             self.current_step = self.num_prev
-        self.shares_held = shares_held
+        self.shares_held = self.initshares_held
         if self.shares_held is None:
             self.shares_held = np.zeros((1, self.num_stocks))
         self.current_price = self.get_price()
@@ -142,6 +143,7 @@ class StockEnv(gym.Env):
             self.done = True
             return np.zeros((self.state_dimensions)), 0, self.done, self.info
         if np.sum(action[:, self.num_stocks:]) > 1:
+            print(action)
             print('gadbad')
         reward = self.take_action(action)
         self.done = self.net_worth <= self.initial_worth*0.05
@@ -156,7 +158,7 @@ class StockEnv(gym.Env):
         print('Net Worth: {}'.format(self.net_worth))
         print('Profit: {}'.format(profit))
         
-def create_stock_env(dfs, train=True,balance = 10000):
+def create_stock_env(dfs, train=True,balance = 10000,shares=None):
     params = {
         'num_stocks' : len(dfs),
         'balance_normal' : 1000000,
@@ -164,5 +166,6 @@ def create_stock_env(dfs, train=True,balance = 10000):
         'price_normal': 100,
         'num_prev' : 10,
         'balance': balance,
+        'shares_held': shares
     }
     return StockEnv(dfs, params, train)

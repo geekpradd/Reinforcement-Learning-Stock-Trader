@@ -30,8 +30,8 @@ class CustomDDPGPolicy(FeedForwardPolicy):
                                            layer_norm=True,
                                            feature_extraction="lnmlp")
 
-def DDPGgive_results(files,balance):  
-    env = create_stock_env(files,train=False,balance =balance)
+def DDPGgive_results(files,balance,shares=None):  
+    env = create_stock_env(files,train=False,balance =balance,shares = shares)
     max_steps = env.max_steps - env.num_prev
     env = DummyVecEnv([lambda: env])
     n_actions = env.action_space.shape[-1]

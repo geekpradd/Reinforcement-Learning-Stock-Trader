@@ -2,7 +2,9 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from .models import User, File
 import datetime, random, _thread, time, copy
-
+import csv,io
+import pandas as pd
+from .DDPG.baselines import DDPGgive_results
 def homepage(request) :
 	if not request.session.session_key :
 		request.session.save()
@@ -11,6 +13,13 @@ def homepage(request) :
 
 def StartTrading(capital, initial_stocks, agent_type, files2, sesID) :
 	files = copy.deepcopy(files2)
+	data_set = []
+	for file in files:
+		x = file.read().decode('utf-8')
+		ios = io.StringIO(x)
+		df = pd.read_csv(ios)
+		data_set.append(df.sort_values('Date'))
+		# print(list(df.columns))
 	'''
 	Updates the database by a list of three lists.
 	First list contains tuples of (x, y) values corresponding to profit values.
@@ -22,20 +31,26 @@ def StartTrading(capital, initial_stocks, agent_type, files2, sesID) :
 
 	files is a list of one or more files depending on agent_type
 	''' 
-	
 	ans = [[], [], []]
+	print(type(agent_type))
+	if agent_type=='0':
+		print('x')
+		ans[0],ans[1],ans[2] = DDPGgive_results(data_set,int(capital))
+	elif agent_type =='1':
+		ans[0],ans[1],ans[2] = DDPGgive_results(data_set,int(capital),initial_stocks)
 
+	# print(ans[0])
 	# Do some machaxxx RL and populate ans
 
 	# Machaxxx RL :
-	for i in range(500) :
-		ans[0].append([i+1, random.randrange(i, 2*i+1, 1)])
-		ans[2].append([i+1, 2*(random.random()-0.5)])
+	# for i in range(len(ans[0])) :
+	# # 	ans[0].append([i+1, random.randrange(i, 2*i+1, 1)])
+	# 	ans[2].append([i+1, 2*(random.random()-0.5)])
 
-	for j in range(len(files)) :
-		ans[1].append([])
-		for i in range(500) :
-			ans[1][j].append([i+1, random.randrange(0, 5000, 1)])
+	# for j in range(len(files)) :
+	# 	ans[1].append([])
+	# 	for i in range(500) :
+	# 		ans[1][j].append([i+1, random.randrange(0, 5000, 1)])
 
 	usr = User.objects.get(key = sesID)
 	usr.graph_data = ans
