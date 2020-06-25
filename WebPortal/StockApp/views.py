@@ -36,9 +36,12 @@ def StartTrading(capital, initial_stocks, agent_type, files2, sesID) :
 	if agent_type=='0':
 		print('x')
 		ans[0],ans[1],ans[2] = DDPGgive_results(data_set,int(capital))
+<<<<<<< HEAD
 	elif agent_type =='1':
 		ans[0],ans[1],ans[2] = DDPGgive_results(data_set,int(capital),initial_stocks)
 
+=======
+>>>>>>> 2563c0449275a9aaf0c03c003d3faa8538608e1c
 	# print(ans[0])
 	# Do some machaxxx RL and populate ans
 
