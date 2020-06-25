@@ -23,6 +23,12 @@
 				}
 
 				e.preventDefault();
+
+				if ($("#upload_file")[0].files.length > 2) {
+					alert("You can upload upto 2 files only");
+					return;
+				}
+
 				var url = "{% url 'fileupload' %}";
 				var data = new FormData();
 				$.each($("#upload_file")[0].files, function(i, file) {
