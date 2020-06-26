@@ -185,12 +185,18 @@
 
 			$("#actions").css("display", "block");
 
-			datapoints3 = [];
-			for (p of graph_data[2]) {
-				datapoints3[datapoints3.length] = {x : p[0], y : p[1]};
+			datalist2 = [];
+			i = 1;
+			for (list of graph_data[2]) {
+				datapoints3 = [];
+				for (p of list) {
+					datapoints3[datapoints3.length] = {x : p[0], y : p[1]};
+				}
+				datalist3[datalist3.length] = {type:"line", name: "Action "+i, showInLegend: true, markerSize: 1, dataPoints: datapoints3};
+				i++;
 			}
 
-			var chart3 = new CanvasJS.Chart("actions", {
+			var chart3 = new CanvasJS.Chart("stocks", {
 				title: {
 					text: "Actions Taken"
 				},
@@ -198,27 +204,28 @@
 					title: "Time"
 				},
 				axisY: {
-					title: "Action",
+					title: "Action"
 				},
+				height: 400,
 				toolTip: {
 					shared: true
 				},
-				height: 400,
 				legend: {
 					cursor: "pointer",
 					verticalAlign: "top",
 					horizontalAlign: "center",
-					dockInsidePlotArea: true,
-					// itemclick: toggleDataSeries
+					// dockInsidePlotArea: true,
+					itemclick: function (e) {
+						if (typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+							e.dataSeries.visible = false;
+						}
+						else {
+							e.dataSeries.visible = true;
+						}
+						chart3.render();
+					}
 				},
-				data: [{
-					type:"scatter",
-					name: "Action",
-					// showInLegend: true,
-					markerSize: 1,
-					// yValueFormatString: "$#,###k",
-					dataPoints: datapoints3
-				}]
+				data: datalist2
 			});
 			chart3.render();
 		}
