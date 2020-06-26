@@ -4,6 +4,7 @@ from .models import User, File
 import datetime, random, _thread, time, copy
 import csv,io
 import pandas as pd
+from .ddqn import wrapper
 from .DDPG.baselines import DDPGgive_results
 def homepage(request) :
 	if not request.session.session_key :
@@ -15,9 +16,7 @@ def StartTrading(capital, initial_stocks, agent_type, files2, sesID) :
 	files = copy.deepcopy(files2)
 	data_set = []
 	for file in files:
-		x = file.read().decode('utf-8')
-		ios = io.StringIO(x)
-		df = pd.read_csv(ios)
+		df = pd.read_csv(file)
 		data_set.append(df.sort_values('Date'))
 		# print(list(df.columns))
 	'''
@@ -31,13 +30,24 @@ def StartTrading(capital, initial_stocks, agent_type, files2, sesID) :
 
 	files is a list of one or more files depending on agent_type
 	''' 
+
 	ans = [[], [], []]
-	print(type(agent_type))
 	if agent_type=='0':
 		print('x')
 		ans[0],ans[1],ans[2] = DDPGgive_results(data_set,int(capital))
 	elif agent_type =='1':
 		ans[0],ans[1],ans[2] = DDPGgive_results(data_set,int(capital),initial_stocks)
+	else:
+		profitst, balancest, sharest, actionst, worthst, pricest = wrapper(data_set[0], int(capital), int(initial_stocks))
+		ans[2] = [[]]
+		for i in range(len(profitst)):
+			ans[0].append([i+1, profitst[i]])
+			ans[2][0].append([i, actionst[i]])
+
+		for j in range(len(files)) :
+			ans[1].append([])
+			for i in range(len(profitst)):
+				ans[1][j].append([i+1, sharest[i]])
 	# print(ans[0])
 	# Do some machaxxx RL and populate ans
 

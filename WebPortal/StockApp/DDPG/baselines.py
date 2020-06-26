@@ -8,13 +8,15 @@ from tensorflow import keras
 import pandas as pd
 import numpy as np
 import random
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 from tensorflow.keras.layers import Dense, Concatenate, Lambda, Activation
 from tensorflow.keras import Input
 from tensorflow import convert_to_tensor as convert
 from collections import deque
 import pickle
 path_base = 'stable/'
-import os
+
 from stable_baselines.common.vec_env import DummyVecEnv,VecCheckNan
 from stable_baselines.ddpg.policies import MlpPolicy
 from stable_baselines.common.noise import NormalActionNoise, OrnsteinUhlenbeckActionNoise, AdaptiveParamNoiseSpec
