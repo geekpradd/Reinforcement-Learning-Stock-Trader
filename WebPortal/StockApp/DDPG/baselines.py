@@ -21,7 +21,7 @@ from stable_baselines.common.noise import NormalActionNoise, OrnsteinUhlenbeckAc
 from stable_baselines.ddpg.policies import FeedForwardPolicy
 from stable_baselines import DDPG
 
-from .env import create_stock_env
+from .env import create_stock_env,softmax
 
 class CustomDDPGPolicy(FeedForwardPolicy):
     def __init__(self, *args, **kwargs):
@@ -41,15 +41,15 @@ def DDPGgive_results(files,balance,shares=None):
 
     # model = DDPG.load("/home/harshit/Documents/itsp-trade agent/Reinforcement-Learning-Stock-Trader/WebPortal/StockApp/Stock_stable.zip",env=env)
     model.learn(total_timesteps=100)
-    profit=balance
+    profit=0
     profitst = np.zeros((max_steps-1,2))
-    actionst = np.zeros(( n_actions,max_steps-1,2))
+    actionst = np.zeros(( n_actions//2,max_steps-1,2))
     shares = np.zeros((len(files),max_steps-1,2))
     obs = env.reset()
     for i in range(max_steps):
         action, _states = model.predict(obs)
         obs, rewards, dones, info = env.step(action)
-        actionst[:,i,1] = action
+        actionst[:,i,1] = -info[0]['action'][0][0:n_actions//2] + info[0]['action'][0][n_actions//2:]
         actionst[:,i,0] = i
         shares[:,i,1] = info[0]['shares_held']
         shares[:,i,0] = i
@@ -58,5 +58,7 @@ def DDPGgive_results(files,balance,shares=None):
         profitst[i] = [i,profit]
         if dones:
             break
+    print(info[0]['action'][0])
+    print(actionst)
     return profitst.tolist(),shares.tolist(),actionst.tolist()
 

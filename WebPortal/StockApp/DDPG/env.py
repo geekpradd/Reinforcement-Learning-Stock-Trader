@@ -150,8 +150,9 @@ class StockEnv(gym.Env):
         if self.done:
             print('snap')
         obs, info = self.observe()
+        info['action'] = action
         return obs, reward, self.done, info
-    
+            
     def render(self, mode='human', close = False):
         profit = self.net_worth - self.initial_worth
         print('Step: {}'.format(self.current_step))
