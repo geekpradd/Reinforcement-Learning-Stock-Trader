@@ -24,10 +24,10 @@
 
 				e.preventDefault();
 
-				if ($("#upload_file")[0].files.length > 2) {
-					alert("You can upload upto 2 files only");
-					return;
-				}
+				// if ($("#upload_file")[0].files.length > 2) {
+				// 	alert("You can upload upto 2 files only");
+				// 	return;
+				// }
 
 				var url = "{% url 'fileupload' %}";
 				var data = new FormData();
@@ -183,7 +183,44 @@
 			});
 			chart2.render();
 
-			// $("#actions").css("display", "block");
+			$("#actions").css("display", "block");
+
+			datapoints3 = [];
+			for (p of graph_data[2]) {
+				datapoints[datapoints.length] = {x : p[0], y : p[1]};
+			}
+
+			var chart3 = new CanvasJS.Chart("actions", {
+				title: {
+					text: "Actions Taken"
+				},
+				axisX: {
+					title: "Time"
+				},
+				axisY: {
+					title: "Action",
+				},
+				toolTip: {
+					shared: true
+				},
+				height: 400,
+				legend: {
+					cursor: "pointer",
+					verticalAlign: "top",
+					horizontalAlign: "center",
+					dockInsidePlotArea: true,
+					// itemclick: toggleDataSeries
+				},
+				data: [{
+					type:"scatter",
+					name: "Action",
+					// showInLegend: true,
+					markerSize: 1,
+					// yValueFormatString: "$#,###k",
+					dataPoints: datapoints3
+				}]
+			});
+			chart3.render();
 		}
 		function addDisable () {
 			$('#stocksNum').attr('disabled', 'true');
