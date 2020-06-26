@@ -25,7 +25,7 @@ SECRET_KEY = '+1kp(g^mvo8r^+!=i70edu11#0k4m7ko8(5j9&(r7!hbpuyyej'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'tradingagent.pythonanywhere.com']
 
 
 # Application definition
